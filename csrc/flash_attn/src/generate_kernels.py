@@ -10,12 +10,11 @@ from pathlib import Path
 from typing import List, Optional
 
 DTYPE_MAP = {
-    "fp16": "cutlass::half_t",
     "bf16": "cutlass::bfloat16_t",
 }
 
 SM = [80]  # Sm80 kernels support up to
-HEAD_DIMENSIONS = [32, 64, 96, 128, 160, 192, 224, 256]
+HEAD_DIMENSIONS = [128]
 KERNEL_IMPL_TEMPLATE_FWD = """#include "flash_fwd_launch_template.h"
 
 template<>
