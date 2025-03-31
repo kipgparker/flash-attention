@@ -1160,29 +1160,6 @@ def flash_attn_varlen_func_with_kvcache(
         cache_seqlens = maybe_contiguous(cache_seqlens)
     cache_batch_idx = maybe_contiguous(cache_batch_idx)
     
-    data = [
-        q,
-        cu_seqlens_q,
-        max_seqlen_q,
-        k_cache,
-        v_cache,
-        k,
-        v,
-        cu_seqlens_k,
-        cache_seqlens,
-        rotary_cos,
-        rotary_sin,
-        cache_batch_idx,
-        None,
-        softmax_scale,
-        causal,
-        window_size[0],
-        window_size[1],
-        rotary_interleaved,
-    ]
-    
-    print([type(x) for x in data])
-    
     out, softmax_lse = flash_attn_cuda.varlen_fwd_kvcache(
         q,
         cu_seqlens_q,
