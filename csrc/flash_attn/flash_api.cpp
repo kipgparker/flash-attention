@@ -195,17 +195,17 @@ void set_params_dgrad(Flash_bwd_params &params,
 }
 
 void run_mha_fwd(Flash_fwd_params &params, cudaStream_t stream, bool force_split_kernel=false) {
-    FP16_SWITCH(!params.is_bf16, [&] {
-        if (params.d == 128) {
-            if (params.num_splits <= 1 && !force_split_kernel) {
-                run_mha_fwd_<elem_type, 128>(params, stream);
-            } else {
-                run_mha_fwd_splitkv_dispatch<elem_type, 128>(params, stream);
-            }
+    TORCH_CHECK(params.is_bf16, "FlashAttention only supports bf16 data type");
+    if (params.d == 128) {
+        if (params.num_splits <= 1 && !force_split_kernel) {
+            run_mha_fwd_<cutlass::bfloat16_t, 128>(params, stream);
         } else {
-            throw std::runtime_error("Only head dim == 128 is supported in this build");
+            run_mha_fwd_splitkv_dispatch<cutlass::bfloat16_t, 128>(params, stream);
         }
-    });
+    } else {
+        throw std::runtime_error("Only head dim == 128 is supported in this build");
+    }
+
 }
 
 // Find the number of splits that maximizes the occupancy. For example, if we have
@@ -606,13 +606,13 @@ mha_varlen_fwd(const at::Tensor &q,  // total_q x num_heads x head_size, total_q
 }
 
 void run_mha_bwd(Flash_bwd_params &params, cudaStream_t stream, const bool configure) {
-    FP16_SWITCH(!params.is_bf16, [&] {
-        if (params.d == 128) {
-            run_mha_bwd_<elem_type, 128>(params, stream, configure);
-        } else {
-            throw std::runtime_error("Only head dim == 128 is supported in this build");
-        }
-    });
+    // assert that we're in bf16 mode
+    TORCH_CHECK(params.is_bf16, "FlashAttention only supports bf16 data type");
+    if (params.d == 128) {
+        run_mha_bwd_<cutlass::bfloat16_t, 128>(params, stream, configure);
+    } else {
+        throw std::runtime_error("Only head dim == 128 is supported in this build");
+    }
 }
 
 std::vector<at::Tensor>
